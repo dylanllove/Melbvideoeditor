@@ -4,12 +4,9 @@ Use this after the footage and song are in the repo. The manifest JSON is alread
 
 ## Goal
 
-Create the best 15 second Howards Melbourne edit from the supplied landscape/low-light clips. The vibe should be a cross between:
+Create a 15 second **landscape 1920x1080** Howards Melbourne edit from the supplied landscape/low-light clips.
 
-1. a cool Howards week-in-Melbourne recap, and
-2. Howards making moves in the Australian market.
-
-It should not feel like a sterile corporate video. It should feel fast, confident, slightly gritty, founder-led, and beatmatched.
+The videos are landscape for a reason and should stay landscape. The desired vibe is **photographs with motion**: smooth, cinematic, lightly stabilised, premium, and atmospheric. Think controlled camera drift, subtle reframing, city mood, and clean pacing — not portrait cropping, not hyperactive zooms, and not a sterile corporate montage.
 
 ## Source of truth
 
@@ -90,18 +87,19 @@ out/melb-howards-edit.mp4
 ## What Codex should improve once assets exist
 
 1. Inspect `src/generated/edit-plan.json` and verify the manifest was used.
-2. Confirm every referenced media file exists in `public/clips/` and the audio exists in `public/audio/`.
-3. Preview the cut in Remotion Studio.
-4. Tune `cropX` / `cropY` in `src/generated/edit-plan.json` only if important subjects are getting cropped out in the vertical 1080x1920 output.
-5. If a clip starts on the wrong moment, adjust its manifest timeline item or improve the trim logic in `scripts/build-edit-plan.ts`.
-6. Keep low-light correction tasteful: brighter, sharper, more saturated, but not fried.
-7. Keep the intro and end-card short. The clips should carry the edit.
-8. Do a final `npm run typecheck` and `npm run render`.
+2. Keep the composition landscape 1920x1080.
+3. Preserve landscape framing unless a tiny crop is needed for smoothing.
+4. Smooth and lightly stabilise the shots with subtle transforms, easing, and reframing.
+5. Make the look feel like photographs with motion: controlled movement, gentle drift, clean city mood.
+6. If a clip starts on the wrong moment, adjust its manifest timeline item or improve the trim logic in `scripts/build-edit-plan.ts`.
+7. Keep low-light correction tasteful: brighter, sharper, more saturated, but not fried.
+8. Keep the intro and end-card short. The clips should carry the edit.
+9. Do a final `npm run typecheck` and `npm run render`.
 
 ## Style notes
 
 - Follow the day-to-night progression in the manifest.
-- Keep the 0–3s stutter-build sharp.
+- Keep the 0–3s intro sharp but smooth.
 - Let the station walk and hotel glide breathe longer.
 - Let the sunset section feel like the transition zone.
 - Let the neon/balcony ending feel like the final Melbourne payoff.
