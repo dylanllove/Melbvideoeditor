@@ -2,7 +2,7 @@ import {existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync} from 'n
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {getVideoMetadata} from '@remotion/renderer';
-import type {EditPlan} from '../src/types';
+import type {EditPlan, MediaType} from '../src/types';
 
 type Settings = {
   bpm?: number;
@@ -11,6 +11,7 @@ type Settings = {
   maxSeconds?: number;
   audioFile?: string;
   audioStartSeconds?: number;
+  analysisFile?: string;
   title?: string;
   subtitle?: string;
   endCard?: string;
@@ -18,16 +19,48 @@ type Settings = {
 
 type Candidate = {
   clip: string;
+  mediaType: MediaType;
   startSec: number;
   endSec: number;
   score: number;
   label: string;
+  note?: string;
 };
 
 type ClipMeta = {
   durationInSeconds: number | null;
   width: number | null;
   height: number | null;
+};
+
+type ManifestClip = {
+  filename?: string;
+  clip_name?: string;
+  clip_duration?: string | number;
+  beginning_strength_score?: number;
+  end_strength_score?: number;
+  whats_happening?: string;
+  time_of_day?: string;
+};
+
+type ManifestTimelineItem = {
+  timestamp_start?: string | number;
+  timestamp_end?: string | number;
+  duration?: string | number;
+  filename?: string;
+  clip_name?: string;
+  pacing_note?: string;
+};
+
+type Manifest = {
+  metadata?: {
+    project_name?: string;
+    audio_source?: string;
+    target_video_duration?: string | number;
+    pacing_style?: string;
+  };
+  clips?: ManifestClip[];
+  audio_timeline_sequence?: ManifestTimelineItem[];
 };
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -40,7 +73,9 @@ const GENERATED_DIR = path.join(ROOT, 'src', 'generated');
 const OUT_PLAN = path.join(GENERATED_DIR, 'edit-plan.json');
 
 const VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.m4v', '.webm']);
+const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 const AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.m4a', '.aac', '.ogg']);
+const MEDIA_EXTENSIONS = new Set([...VIDEO_EXTENSIONS, ...IMAGE_EXTENSIONS]);
 
 const ensureFolders = () => {
   for (const dir of [PUBLIC_DIR, CLIPS_DIR, AUDIO_DIR, ANALYSIS_DIR, GENERATED_DIR]) {
@@ -73,6 +108,11 @@ const listMedia = (dir: string, extensions: Set<string>) => {
     .sort((a, b) => a.localeCompare(b));
 };
 
+const mediaTypeFor = (filename: string): MediaType => {
+  const extension = path.extname(filename).toLowerCase();
+  return IMAGE_EXTENSIONS.has(extension) ? 'image' : 'video';
+};
+
 const parseTime = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
@@ -83,7 +123,7 @@ const parseTime = (value: unknown): number | null => {
   }
 
   const trimmed = value.trim().replace(/s$/i, '');
-  if (!trimmed) {
+  if (!trimmed || trimmed.toLowerCase() === 'static image') {
     return null;
   }
 
@@ -110,25 +150,30 @@ const asObject = (value: unknown): Record<string, unknown> | null => {
   return null;
 };
 
-const filenameFromValue = (value: unknown, clipFiles: string[]): string | null => {
+const filenameFromValue = (value: unknown, mediaFiles: string[]): string | null => {
   if (typeof value !== 'string') {
     return null;
   }
 
   const base = path.basename(value);
-  const exact = clipFiles.find((clip) => clip === base);
+  const exact = mediaFiles.find((clip) => clip === base);
   if (exact) {
     return exact;
   }
 
+  const caseInsensitive = mediaFiles.find((clip) => clip.toLowerCase() === base.toLowerCase());
+  if (caseInsensitive) {
+    return caseInsensitive;
+  }
+
   const lower = value.toLowerCase();
-  return clipFiles.find((clip) => lower.includes(clip.toLowerCase())) ?? null;
+  return mediaFiles.find((clip) => lower.includes(clip.toLowerCase())) ?? null;
 };
 
-const getClipFromObject = (obj: Record<string, unknown>, inherited: string | null, clipFiles: string[]) => {
+const getClipFromObject = (obj: Record<string, unknown>, inherited: string | null, mediaFiles: string[]) => {
   const clipKeys = ['filename', 'file', 'clip', 'video', 'source', 'sourceFile', 'source_file', 'path', 'name'];
   for (const key of clipKeys) {
-    const found = filenameFromValue(obj[key], clipFiles);
+    const found = filenameFromValue(obj[key], mediaFiles);
     if (found) {
       return found;
     }
@@ -210,10 +255,10 @@ const labelObject = (obj: Record<string, unknown>, fallback: string) => {
   return fallback;
 };
 
-const walkAnalysis = (node: unknown, clipFiles: string[], inheritedClip: string | null, candidates: Candidate[]) => {
+const walkAnalysis = (node: unknown, mediaFiles: string[], inheritedClip: string | null, candidates: Candidate[]) => {
   if (Array.isArray(node)) {
     for (const child of node) {
-      walkAnalysis(child, clipFiles, inheritedClip, candidates);
+      walkAnalysis(child, mediaFiles, inheritedClip, candidates);
     }
     return;
   }
@@ -223,12 +268,13 @@ const walkAnalysis = (node: unknown, clipFiles: string[], inheritedClip: string 
     return;
   }
 
-  const clip = getClipFromObject(obj, inheritedClip, clipFiles);
+  const clip = getClipFromObject(obj, inheritedClip, mediaFiles);
   const bounds = getBoundsFromObject(obj);
 
   if (clip && bounds) {
     candidates.push({
       clip,
+      mediaType: mediaTypeFor(clip),
       startSec: bounds.startSec,
       endSec: bounds.endSec,
       score: scoreObject(obj),
@@ -238,26 +284,31 @@ const walkAnalysis = (node: unknown, clipFiles: string[], inheritedClip: string 
 
   for (const value of Object.values(obj)) {
     if (value && typeof value === 'object') {
-      walkAnalysis(value, clipFiles, clip, candidates);
+      walkAnalysis(value, mediaFiles, clip, candidates);
     }
   }
 };
 
-const getClipMetadata = async (clipFiles: string[]): Promise<Map<string, ClipMeta>> => {
+const getClipMetadata = async (mediaFiles: string[]): Promise<Map<string, ClipMeta>> => {
   const map = new Map<string, ClipMeta>();
 
-  for (const clip of clipFiles) {
-    const absolutePath = path.join(CLIPS_DIR, clip);
+  for (const file of mediaFiles) {
+    if (mediaTypeFor(file) === 'image') {
+      map.set(file, {durationInSeconds: null, width: null, height: null});
+      continue;
+    }
+
+    const absolutePath = path.join(CLIPS_DIR, file);
     try {
       const metadata = await getVideoMetadata(absolutePath, {logLevel: 'warn'});
-      map.set(clip, {
+      map.set(file, {
         durationInSeconds: metadata.durationInSeconds,
         width: metadata.width,
         height: metadata.height,
       });
     } catch (error) {
-      console.warn(`Could not read metadata for ${clip}. The edit plan will still reference it.`, error);
-      map.set(clip, {durationInSeconds: null, width: null, height: null});
+      console.warn(`Could not read metadata for ${file}. The edit plan will still reference it.`, error);
+      map.set(file, {durationInSeconds: null, width: null, height: null});
     }
   }
 
@@ -338,38 +389,155 @@ const makeEmptyPlan = (settings: Settings): EditPlan => {
     subtitle: settings.subtitle ?? 'Week in the field',
     endCard: settings.endCard ?? 'Making moves in the Aus market',
     segments: [],
-    notes: ['No clips found yet. Add video files to public/clips and rerun npm run plan.'],
+    notes: ['No media or usable manifest timeline found yet. Add files to public/clips and a manifest to public/analysis, then rerun npm run plan.'],
   };
 };
 
-const buildPlan = async () => {
-  ensureFolders();
+const resolveAnalysisFiles = (settings: Settings) => {
+  const jsonFiles = listMedia(ANALYSIS_DIR, new Set(['.json']));
+  if (settings.analysisFile && jsonFiles.includes(settings.analysisFile)) {
+    return [settings.analysisFile];
+  }
 
-  const settings = readJson<Settings>(SETTINGS_PATH, {});
-  const clipFiles = listMedia(CLIPS_DIR, VIDEO_EXTENSIONS);
-  const audioFiles = listMedia(AUDIO_DIR, AUDIO_EXTENSIONS);
+  const preferred = ['melbourne_edit_manifest.json', 'everything.json', 'manifest.json'];
+  const preferredFound = preferred.find((file) => jsonFiles.includes(file));
+  if (preferredFound) {
+    return [preferredFound];
+  }
+
+  return jsonFiles.slice(0, 1);
+};
+
+const buildManifestLookup = (manifest: Manifest) => {
+  const map = new Map<string, ManifestClip>();
+  for (const clip of manifest.clips ?? []) {
+    if (clip.filename) {
+      map.set(clip.filename.toLowerCase(), clip);
+    }
+  }
+  return map;
+};
+
+const scoreFromManifest = (item: ManifestTimelineItem, clip: ManifestClip | undefined) => {
+  const beginning = clip?.beginning_strength_score ?? 5;
+  const ending = clip?.end_strength_score ?? 5;
+  const note = `${item.pacing_note ?? ''} ${clip?.whats_happening ?? ''}`.toLowerCase();
+  const isFinalOrReveal = note.includes('final') || note.includes('reveal') || note.includes('climax') || note.includes('cold stop');
+  return (isFinalOrReveal ? ending : Math.max(beginning, ending)) / 10;
+};
+
+const buildPlanFromManifestTimeline = (manifest: Manifest, manifestSource: string, settings: Settings, mediaFiles: string[], audioFiles: string[]): EditPlan | null => {
+  const timeline = manifest.audio_timeline_sequence ?? [];
+  if (!timeline.length) {
+    return null;
+  }
+
+  const fps = 30;
+  const bpm = settings.bpm ?? 120;
+  const beatSeconds = 60 / bpm;
+  const clipLookup = buildManifestLookup(manifest);
+  const audioFromManifest = manifest.metadata?.audio_source;
+  const audio = settings.audioFile && audioFiles.includes(settings.audioFile)
+    ? settings.audioFile
+    : audioFromManifest && audioFiles.includes(audioFromManifest)
+      ? audioFromManifest
+      : audioFiles[0] ?? audioFromManifest ?? null;
+
+  const segments = timeline.map((item, index) => {
+    const filename = item.filename ?? `missing-${index + 1}.mp4`;
+    const manifestClip = clipLookup.get(filename.toLowerCase());
+    const timelineStartSec = parseTime(item.timestamp_start) ?? 0;
+    const duration = parseTime(item.duration) ?? Math.max(0.5, (parseTime(item.timestamp_end) ?? timelineStartSec + 1) - timelineStartSec);
+    const timelineEndSec = parseTime(item.timestamp_end) ?? timelineStartSec + duration;
+    const actualDuration = Math.max(0.25, timelineEndSec - timelineStartSec);
+    const mediaType = mediaTypeFor(filename);
+    const useEndStrength = (manifestClip?.end_strength_score ?? 0) > (manifestClip?.beginning_strength_score ?? 0);
+    const sourceDuration = parseTime(manifestClip?.clip_duration);
+    const startSec = mediaType === 'image'
+      ? 0
+      : useEndStrength && sourceDuration !== null
+        ? Math.max(0, sourceDuration - actualDuration)
+        : 0;
+    const endSec = mediaType === 'image' ? actualDuration : startSec + actualDuration;
+
+    return {
+      id: `seg-${String(index + 1).padStart(2, '0')}`,
+      clip: filename,
+      mediaType,
+      label: item.clip_name ?? manifestClip?.clip_name ?? filename,
+      note: item.pacing_note,
+      startSec: Number(startSec.toFixed(3)),
+      endSec: Number(endSec.toFixed(3)),
+      timelineStartSec: Number(timelineStartSec.toFixed(3)),
+      timelineEndSec: Number(timelineEndSec.toFixed(3)),
+      fromFrame: Math.round(timelineStartSec * fps),
+      durationFrames: Math.max(1, Math.round(actualDuration * fps)),
+      beatStart: Number((timelineStartSec / beatSeconds).toFixed(3)),
+      beatLength: Number((actualDuration / beatSeconds).toFixed(3)),
+      score: Number(scoreFromManifest(item, manifestClip).toFixed(3)),
+      cropX: 50,
+      cropY: 50,
+    };
+  });
+
+  const durationSeconds = Math.max(...segments.map((segment) => segment.timelineEndSec));
+  const missingMedia = segments
+    .map((segment) => segment.clip)
+    .filter((clip) => !mediaFiles.some((file) => file.toLowerCase() === clip.toLowerCase()));
+
+  const notes = [
+    `Built from manifest timeline: ${manifestSource}.`,
+    manifest.metadata?.pacing_style ? `Pacing style: ${manifest.metadata.pacing_style}.` : 'Pacing style: manifest-defined.',
+    `Selected ${segments.length} timeline segments across ${durationSeconds.toFixed(2)}s.`,
+    audio ? `Using audio/${audio}.` : 'No audio file found yet. Add the song to public/audio.',
+  ];
+
+  if (missingMedia.length) {
+    notes.push(`Missing referenced media in public/clips: ${[...new Set(missingMedia)].join(', ')}.`);
+  }
+
+  return {
+    fps,
+    width: 1080,
+    height: 1920,
+    bpm,
+    beatSeconds: Number(beatSeconds.toFixed(6)),
+    durationSeconds: Number(durationSeconds.toFixed(3)),
+    durationInFrames: Math.round(durationSeconds * fps),
+    audio,
+    audioStartSeconds: settings.audioStartSeconds ?? 0,
+    audioStartFrame: Math.round((settings.audioStartSeconds ?? 0) * fps),
+    title: settings.title ?? 'Howards in Melbourne',
+    subtitle: settings.subtitle ?? 'Melbourne City Pacing Edit',
+    endCard: settings.endCard ?? 'Making moves in the Aus market',
+    pacingStyle: manifest.metadata?.pacing_style,
+    manifestSource,
+    segments,
+    notes,
+  };
+};
+
+const buildFallbackPlan = async (settings: Settings, mediaFiles: string[], audioFiles: string[], analysisFiles: string[]) => {
   const audio = settings.audioFile && audioFiles.includes(settings.audioFile) ? settings.audioFile : audioFiles[0] ?? null;
 
-  if (clipFiles.length === 0) {
+  if (mediaFiles.length === 0) {
     const empty = makeEmptyPlan({...settings, audioFile: audio ?? undefined});
     empty.audio = audio;
-    writeFileSync(OUT_PLAN, `${JSON.stringify(empty, null, 2)}\n`);
-    console.log(`Wrote placeholder edit plan to ${path.relative(ROOT, OUT_PLAN)}.`);
-    return;
+    return empty;
   }
 
   const candidates: Candidate[] = [];
-  const analysisFiles = listMedia(ANALYSIS_DIR, new Set(['.json']));
 
   for (const analysisFile of analysisFiles) {
     const json = readJson<unknown>(path.join(ANALYSIS_DIR, analysisFile), null);
-    walkAnalysis(json, clipFiles, null, candidates);
+    walkAnalysis(json, mediaFiles, null, candidates);
   }
 
   if (candidates.length === 0) {
-    for (const clip of clipFiles) {
+    for (const clip of mediaFiles) {
       candidates.push({
         clip,
+        mediaType: mediaTypeFor(clip),
         startSec: 0,
         endSec: 4,
         score: 0.5,
@@ -378,7 +546,7 @@ const buildPlan = async () => {
     }
   }
 
-  const metadata = await getClipMetadata(clipFiles);
+  const metadata = await getClipMetadata(mediaFiles);
   const bpm = settings.bpm ?? 128;
   const fps = 30;
   const minSeconds = settings.minSeconds ?? 15;
@@ -398,19 +566,23 @@ const buildPlan = async () => {
     const segmentDurationSeconds = beatLength * beatSeconds;
     const clipDuration = metadata.get(candidate.clip)?.durationInSeconds ?? null;
     const latestSafeStart = clipDuration === null ? candidate.startSec : Math.max(0, clipDuration - segmentDurationSeconds - 0.1);
-    const startSec = Math.max(0, Math.min(candidate.startSec, latestSafeStart));
+    const startSec = candidate.mediaType === 'image' ? 0 : Math.max(0, Math.min(candidate.startSec, latestSafeStart));
     const fallbackEnd = startSec + segmentDurationSeconds + 0.15;
     const desiredEnd = Math.max(candidate.endSec, fallbackEnd);
-    const endSec = clipDuration === null ? desiredEnd : Math.min(clipDuration, desiredEnd);
+    const endSec = candidate.mediaType === 'image' ? segmentDurationSeconds : clipDuration === null ? desiredEnd : Math.min(clipDuration, desiredEnd);
     const fromFrame = Math.round(beatCursor * beatSeconds * fps);
     const nextFrame = Math.round((beatCursor + beatLength) * beatSeconds * fps);
 
     const segment = {
       id: `seg-${String(index + 1).padStart(2, '0')}`,
       clip: candidate.clip,
+      mediaType: candidate.mediaType,
       label: candidate.label,
+      note: candidate.note,
       startSec: Number(startSec.toFixed(3)),
       endSec: Number(Math.max(startSec + 0.5, endSec).toFixed(3)),
+      timelineStartSec: Number((beatCursor * beatSeconds).toFixed(3)),
+      timelineEndSec: Number(((beatCursor + beatLength) * beatSeconds).toFixed(3)),
       fromFrame,
       durationFrames: Math.max(1, nextFrame - fromFrame),
       beatStart: beatCursor,
@@ -424,7 +596,7 @@ const buildPlan = async () => {
     return segment;
   });
 
-  const plan: EditPlan = {
+  return {
     fps,
     width: 1080,
     height: 1920,
@@ -440,14 +612,34 @@ const buildPlan = async () => {
     endCard: settings.endCard ?? 'Making moves in the Aus market',
     segments,
     notes: [
-      `Selected ${segments.length} beatmatched segments from ${clipFiles.length} clips.`,
-      analysisFiles.length ? `Read ${analysisFiles.length} analysis JSON file(s).` : 'No analysis JSON found; used simple clip fallbacks.',
+      `Selected ${segments.length} beatmatched segments from ${mediaFiles.length} media assets.`,
+      analysisFiles.length ? `Read ${analysisFiles.length} analysis JSON file(s).` : 'No analysis JSON found; used simple media fallbacks.',
       audio ? `Using audio/${audio}.` : 'No audio file found yet. Add one to public/audio.',
     ],
-  };
+  } satisfies EditPlan;
+};
 
-  writeFileSync(OUT_PLAN, `${JSON.stringify(plan, null, 2)}\n`);
-  console.log(`Wrote ${segments.length} segments / ${plan.durationSeconds}s to ${path.relative(ROOT, OUT_PLAN)}.`);
+const buildPlan = async () => {
+  ensureFolders();
+
+  const settings = readJson<Settings>(SETTINGS_PATH, {});
+  const mediaFiles = listMedia(CLIPS_DIR, MEDIA_EXTENSIONS);
+  const audioFiles = listMedia(AUDIO_DIR, AUDIO_EXTENSIONS);
+  const analysisFiles = resolveAnalysisFiles(settings);
+
+  for (const analysisFile of analysisFiles) {
+    const manifest = readJson<Manifest>(path.join(ANALYSIS_DIR, analysisFile), {});
+    const plan = buildPlanFromManifestTimeline(manifest, analysisFile, settings, mediaFiles, audioFiles);
+    if (plan) {
+      writeFileSync(OUT_PLAN, `${JSON.stringify(plan, null, 2)}\n`);
+      console.log(`Wrote manifest edit plan with ${plan.segments.length} segments / ${plan.durationSeconds}s to ${path.relative(ROOT, OUT_PLAN)}.`);
+      return;
+    }
+  }
+
+  const fallbackPlan = await buildFallbackPlan(settings, mediaFiles, audioFiles, analysisFiles);
+  writeFileSync(OUT_PLAN, `${JSON.stringify(fallbackPlan, null, 2)}\n`);
+  console.log(`Wrote fallback edit plan to ${path.relative(ROOT, OUT_PLAN)}.`);
 };
 
 buildPlan().catch((error) => {
