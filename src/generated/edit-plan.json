@@ -1,0 +1,19 @@
+{
+  "fps": 30,
+  "width": 1080,
+  "height": 1920,
+  "bpm": 128,
+  "beatSeconds": 0.46875,
+  "durationSeconds": 20.625,
+  "durationInFrames": 619,
+  "audio": null,
+  "audioStartSeconds": 0,
+  "audioStartFrame": 0,
+  "title": "Howards in Melbourne",
+  "subtitle": "Week in the field",
+  "endCard": "Making moves in the Aus market",
+  "segments": [],
+  "notes": [
+    "Placeholder plan. Add clips/audio/analysis and run npm run plan."
+  ]
+}
