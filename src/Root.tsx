@@ -12,9 +12,9 @@ export const Root = () => {
       component={MelbourneEdit}
       durationInFrames={Math.max(1, plan.durationInFrames)}
       fps={plan.fps}
-      width={plan.width}
-      height={plan.height}
-      defaultProps={{plan}}
+      width={1920}
+      height={1080}
+      defaultProps={{plan: {...plan, width: 1920, height: 1080}}}
     />
   );
 };
