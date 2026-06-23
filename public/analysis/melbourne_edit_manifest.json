@@ -1,0 +1,266 @@
+{
+  "metadata": {
+    "project_name": "Melbourne City Pacing Edit",
+    "audio_source": "Video1Audio.mp3",
+    "total_clips": 12,
+    "target_video_duration": "15.0s",
+    "pacing_style": "Fast-paced, rhythmic cuts with a progressive Day-to-Night transition"
+  },
+  "clips": [
+    {
+      "filename": "1.MOV",
+      "clip_name": "skyscraper_look_up",
+      "time_of_day": "Day",
+      "clip_duration": "2.0s",
+      "key_moments": [
+        "Silver hatchback car driving past in foreground",
+        "Fast low-angle whip up toward twisted glass skyscraper architecture"
+      ],
+      "whats_happening": "A dynamic upward-panning urban shot showcasing modern skyscraper designs against a bright sky.",
+      "beginning_strength_score": 7,
+      "end_strength_score": 2
+    },
+    {
+      "filename": "2.MOV",
+      "clip_name": "station_walk",
+      "time_of_day": "Day",
+      "clip_duration": "7.0s",
+      "key_moments": [
+        "Following shot of a pedestrian walking outside Southern Cross Station",
+        "Wide pan up to a large digital billboard featuring a Minions advertisement"
+      ],
+      "whats_happening": "First-person tracking shot moving along a busy city sidewalk before sweeping upwards toward a massive advertising display.",
+      "beginning_strength_score": 6,
+      "end_strength_score": 3
+    },
+    {
+      "filename": "3.MOV",
+      "clip_name": "hotel_interior",
+      "time_of_day": "Day (Indoor)",
+      "clip_duration": "6.0s",
+      "key_moments": [
+        "Smooth glide through a polished luxury hotel hallway",
+        "Approaching an indoor balcony overlooking a grand lower atrium space"
+      ],
+      "whats_happening": "A steady, forward-moving perspective shot walking inside the InterContinental hotel lobby towards an architectural overlook.",
+      "beginning_strength_score": 5,
+      "end_strength_score": 5
+    },
+    {
+      "filename": "4.MOV",
+      "clip_name": "night_street_lanterns",
+      "time_of_day": "Night",
+      "clip_duration": "2.0s",
+      "key_moments": [
+        "Rows of glowing red lanterns hanging above a narrow city street",
+        "Delivery scooter and a white sedan passing through the frame"
+      ],
+      "whats_happening": "Vibrant and moody night street footage capturing standard urban transit under festive cultural decorations.",
+      "beginning_strength_score": 2,
+      "end_strength_score": 8
+    },
+    {
+      "filename": "5.jpg",
+      "clip_name": "elevator_mirror_photo",
+      "time_of_day": "Day (Indoor)",
+      "clip_duration": "Static Image",
+      "key_moments": [
+        "Top-down reflection inside a wood-paneled luxury elevator cab",
+        "One individual looking straight up into the mirror while wearing a NY baseball cap"
+      ],
+      "whats_happening": "A high-angle mirror selfie of two friends inside an elevator, showing a floor indicator reading 10.",
+      "beginning_strength_score": 6,
+      "end_strength_score": 4
+    },
+    {
+      "filename": "6.MOV",
+      "clip_name": "heritage_building_intersection",
+      "time_of_day": "Day",
+      "clip_duration": "3.0s",
+      "key_moments": [
+        "Establishing view of a grand historic red-brick and cream architectural landmark",
+        "Pan shot capturing city cross-traffic and distant glass towers"
+      ],
+      "whats_happening": "A bright daytime scene looking across a street intersection at a beautifully preserved classical building framed by the modern skyline.",
+      "beginning_strength_score": 8,
+      "end_strength_score": 2
+    },
+    {
+      "filename": "7.MOV",
+      "clip_name": "cafe_workspace",
+      "time_of_day": "Day (Indoor)",
+      "clip_duration": "3.0s",
+      "key_moments": [
+        "Dual laptop setup with a marketing audit page open on a MacBook screen",
+        "Close-up profile of a man multitasking with his smartphone over a desk"
+      ],
+      "whats_happening": "An indoor shot tracking a casual productivity workflow inside a modern cafe with bright decorative background lighting.",
+      "beginning_strength_score": 6,
+      "end_strength_score": 4
+    },
+    {
+      "filename": "8.MOV",
+      "clip_name": "sunset_intersection",
+      "time_of_day": "Sunset",
+      "clip_duration": "4.0s",
+      "key_moments": [
+        "Stunning golden-hour sky with brilliant orange and yellow cloud cover",
+        "Pedestrian standing on a corner framing a phone photo of the horizon"
+      ],
+      "whats_happening": "A wide atmospheric shot capturing a dramatic urban sunset at a street junction surrounded by heritage and commercial buildings.",
+      "beginning_strength_score": 7,
+      "end_strength_score": 5
+    },
+    {
+      "filename": "9.MOV",
+      "clip_name": "warm_lit_building",
+      "time_of_day": "Night",
+      "clip_duration": "3.0s",
+      "key_moments": [
+        "Zebra pattern of warmly glowing rectangular windows along a brick facade",
+        "Dark, towering modern apartment blocks rising in the background"
+      ],
+      "whats_happening": "A steady nighttime cityscape accentuating the contrast between low-rise brick windows and high-rise metropolitan towers.",
+      "beginning_strength_score": 2,
+      "end_strength_score": 7
+    },
+    {
+      "filename": "10.mov",
+      "clip_name": "rmit_geometric_lighting",
+      "time_of_day": "Night",
+      "clip_duration": "1.0s",
+      "key_moments": [
+        "Low angle focusing on sharp, angular overhanging architectural lines",
+        "Bright white linear LED strips illuminating the structure near an RMIT sign"
+      ],
+      "whats_happening": "A quick, punchy night cut focusing on contemporary geometric architectural details and illuminated pathways.",
+      "beginning_strength_score": 4,
+      "end_strength_score": 6
+    },
+    {
+      "filename": "11.MOV",
+      "clip_name": "melbourne_central_neon",
+      "time_of_day": "Night",
+      "clip_duration": "3.0s",
+      "key_moments": [
+        "Vivid, glowing blue and red neon vertical 'Melbourne Central' sign",
+        "Bicyclists and food delivery couriers waiting at a dark intersection street-side"
+      ],
+      "whats_happening": "An iconic city night snapshot highlighting illuminated landmark signage and active evening city transit.",
+      "beginning_strength_score": 4,
+      "end_strength_score": 9
+    },
+    {
+      "filename": "12.MOV",
+      "clip_name": "balcony_skyline_reveal",
+      "time_of_day": "Night",
+      "clip_duration": "6.0s",
+      "key_moments": [
+        "Man looking over a digital tablet next to a warm glowing spherical lamp",
+        "Smooth cinematic pan to the right through a circular brick balcony opening",
+        "Grand reveal of the illuminated metropolitan skyline at night"
+      ],
+      "whats_happening": "A premium atmospheric sequence starting with a close-up personal workspace before panning to reveal a stunning framed city view.",
+      "beginning_strength_score": 3,
+      "end_strength_score": 9
+    }
+  ],
+  "audio_timeline_sequence": [
+    {
+      "timestamp_start": "0.00s",
+      "timestamp_end": "0.75s",
+      "duration": "0.75s",
+      "filename": "6.MOV",
+      "clip_name": "heritage_building_intersection",
+      "pacing_note": "Rapid Stutter Build: Perfect wide daytime establishing shot to set the scene instantly."
+    },
+    {
+      "timestamp_start": "0.75s",
+      "timestamp_end": "1.50s",
+      "duration": "0.75s",
+      "filename": "1.MOV",
+      "clip_name": "skyscraper_look_up",
+      "pacing_note": "Rapid Stutter Build: Upward camera movement accents the accelerating audio pulse."
+    },
+    {
+      "timestamp_start": "1.50s",
+      "timestamp_end": "2.25s",
+      "duration": "0.75s",
+      "filename": "5.jpg",
+      "clip_name": "elevator_mirror_photo",
+      "pacing_note": "Rapid Stutter Build: Stylized static mirror frame breaks up the video rhythm playfully."
+    },
+    {
+      "timestamp_start": "2.25s",
+      "timestamp_end": "3.00s",
+      "duration": "0.75s",
+      "filename": "7.MOV",
+      "clip_name": "cafe_workspace",
+      "pacing_note": "Pre-Drop Apex: Tight indoor framing finishes off the daylight introduction block."
+    },
+    {
+      "timestamp_start": "3.00s",
+      "timestamp_end": "5.50s",
+      "duration": "2.50s",
+      "filename": "2.MOV",
+      "clip_name": "station_walk",
+      "pacing_note": "THE PRIMARY DROP: High beginning strength tracking shot lands perfectly on the heavy beat drop, panning to the screen."
+    },
+    {
+      "timestamp_start": "5.50s",
+      "timestamp_end": "8.00s",
+      "duration": "2.50s",
+      "filename": "3.MOV",
+      "clip_name": "hotel_interior",
+      "pacing_note": "Driving Rhythm: Continuous forward glide maintains high kinetic movement through the hotel lobby."
+    },
+    {
+      "timestamp_start": "8.00s",
+      "timestamp_end": "10.00s",
+      "duration": "2.0s",
+      "filename": "8.MOV",
+      "clip_name": "sunset_intersection",
+      "pacing_note": "THE TRANSITION ZONE: Audio shifts gears here; visually bridges the timeline seamlessly from day to night via golden sunset hues."
+    },
+    {
+      "timestamp_start": "10.00s",
+      "timestamp_end": "11.20s",
+      "duration": "1.20s",
+      "filename": "4.MOV",
+      "clip_name": "night_street_lanterns",
+      "pacing_note": "Night Drive Pacing: Establishes the dark cityscape block instantly with vibrant hanging red lanterns."
+    },
+    {
+      "timestamp_start": "11.20s",
+      "timestamp_end": "12.00s",
+      "duration": "0.80s",
+      "filename": "10.mov",
+      "clip_name": "rmit_geometric_lighting",
+      "pacing_note": "Fast Accent Cut: High-speed architectural flash syncs up to a rhythmic audio tick."
+    },
+    {
+      "timestamp_start": "12.00s",
+      "timestamp_end": "13.00s",
+      "duration": "1.00s",
+      "filename": "9.MOV",
+      "clip_name": "warm_lit_building",
+      "pacing_note": "Climax Setup: Steady, high-contrast block prepares the viewer for the final energy spikes."
+    },
+    {
+      "timestamp_start": "13.00s",
+      "timestamp_end": "14.00s",
+      "duration": "1.00s",
+      "filename": "11.MOV",
+      "clip_name": "melbourne_central_neon",
+      "pacing_note": "Peak Climax: Flashing neon icon lands directly on the final high-energy audio burst."
+    },
+    {
+      "timestamp_start": "14.00s",
+      "timestamp_end": "15.00s",
+      "duration": "1.00s",
+      "filename": "12.MOV",
+      "clip_name": "balcony_skyline_reveal",
+      "pacing_note": "THE COLD STOP: Maxed out end-strength reveal pans directly onto the massive city skyline view, freezing flawlessly on the final silence."
+    }
+  ]
+}
