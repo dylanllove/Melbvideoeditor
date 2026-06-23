@@ -1,12 +1,13 @@
 {
-  "bpm": 128,
-  "targetSeconds": 21,
+  "bpm": 120,
+  "targetSeconds": 15,
   "minSeconds": 15,
   "maxSeconds": 25,
-  "audioFile": "song.mp3",
+  "audioFile": "Video1Audio.mp3",
   "audioStartSeconds": 0,
+  "analysisFile": "melbourne_edit_manifest.json",
   "title": "Howards in Melbourne",
-  "subtitle": "Week in the field",
+  "subtitle": "Melbourne City Pacing Edit",
   "endCard": "Making moves in the Aus market",
   "style": "melbourne-howards-founder-edit"
 }
