@@ -28,39 +28,25 @@ const fontFamily = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSyst
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
-const BeatFlash = ({plan}: {plan: EditPlan}) => {
-  const frame = useCurrentFrame();
-  const beatFrame = Math.max(1, Math.round(plan.beatSeconds * plan.fps));
-  const distanceFromBeat = frame % beatFrame;
-  const opacity = interpolate(distanceFromBeat, [0, 2, 7], [0.18, 0.09, 0], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-
-  return <AbsoluteFill style={{background: 'white', opacity, pointerEvents: 'none'}} />;
-};
-
-const Grain = () => {
-  return (
-    <AbsoluteFill
-      style={{
-        pointerEvents: 'none',
-        mixBlendMode: 'screen',
-        opacity: 0.08,
-        backgroundImage:
-          'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 0 1px, transparent 1px), radial-gradient(circle at 80% 60%, rgba(255,255,255,0.35) 0 1px, transparent 1px)',
-        backgroundSize: '7px 7px, 11px 11px',
-      }}
-    />
-  );
-};
+const Grain = () => (
+  <AbsoluteFill
+    style={{
+      pointerEvents: 'none',
+      mixBlendMode: 'screen',
+      opacity: 0.045,
+      backgroundImage:
+        'radial-gradient(circle at 18% 30%, rgba(255,255,255,0.35) 0 1px, transparent 1px), radial-gradient(circle at 80% 62%, rgba(255,255,255,0.25) 0 1px, transparent 1px)',
+      backgroundSize: '8px 8px, 13px 13px',
+    }}
+  />
+);
 
 const Vignette = () => (
   <AbsoluteFill
     style={{
       pointerEvents: 'none',
       background:
-        'radial-gradient(circle at 50% 42%, transparent 0%, transparent 46%, rgba(0,0,0,0.45) 100%)',
+        'radial-gradient(circle at 50% 45%, transparent 0%, transparent 58%, rgba(0,0,0,0.36) 100%)',
     }}
   />
 );
@@ -81,18 +67,28 @@ const ClipLayer = ({segment}: {segment: Segment}) => {
   const trimBefore = Math.max(0, Math.round(segment.startSec * fps));
   const trimAfter = Math.max(trimBefore + 1, Math.round(segment.endSec * fps));
   const src = staticFile(`/clips/${segment.clip}`);
-  const punchScale = interpolate(progress, [0, 1], segment.mediaType === 'image' ? [1.0, 1.08] : [1.06, 1.14], {
+
+  const motionScale = interpolate(progress, [0, 1], [1.012, 1.038], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const settle = interpolate(local, [0, 5, 12], [1.035, 1.01, 1], {
+  const driftX = interpolate(progress, [0, 1], [-6, 6], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
+  const driftY = interpolate(progress, [0, 1], [3, -3], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const fadeIn = interpolate(local, [0, 8], [0.72, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const exposure = segment.timelineStartSec >= 10 ? 1.12 : segment.timelineStartSec >= 8 ? 1.08 : 1.03;
 
   return (
     <Sequence from={segment.fromFrame} durationInFrames={segment.durationFrames} name={segment.label}>
-      <AbsoluteFill style={{background: '#050505'}}>
+      <AbsoluteFill style={{background: '#050505', opacity: fadeIn}}>
         <MediaLayer
           segment={segment}
           src={src}
@@ -103,47 +99,11 @@ const ClipLayer = ({segment}: {segment: Segment}) => {
             height: '100%',
             objectFit: 'cover',
             objectPosition: `${segment.cropX ?? 50}% ${segment.cropY ?? 50}%`,
-            filter: 'blur(22px) brightness(0.55) contrast(1.15) saturate(1.15)',
-            transform: `scale(${punchScale * 1.16})`,
+            filter: `brightness(${exposure}) contrast(1.07) saturate(1.08)`,
+            transform: `translate3d(${driftX}px, ${driftY}px, 0) scale(${motionScale})`,
+            transformOrigin: `${segment.cropX ?? 50}% ${segment.cropY ?? 50}%`,
           }}
         />
-        <AbsoluteFill
-          style={{
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 36,
-          }}
-        >
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              overflow: 'hidden',
-              borderRadius: 34,
-              boxShadow: '0 28px 80px rgba(0,0,0,0.55)',
-              transform: `scale(${settle})`,
-              background: '#111',
-            }}
-          >
-            <MediaLayer
-              segment={segment}
-              src={src}
-              trimBefore={trimBefore}
-              trimAfter={trimAfter}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: `${segment.cropX ?? 50}% ${segment.cropY ?? 50}%`,
-                filter:
-                  segment.mediaType === 'image'
-                    ? 'brightness(1.08) contrast(1.08) saturate(1.1)'
-                    : 'brightness(1.18) contrast(1.12) saturate(1.18)',
-                transform: `scale(${punchScale})`,
-              }}
-            />
-          </div>
-        </AbsoluteFill>
       </AbsoluteFill>
     </Sequence>
   );
@@ -151,11 +111,11 @@ const ClipLayer = ({segment}: {segment: Segment}) => {
 
 const IntroTitle = ({plan}: {plan: EditPlan}) => {
   const frame = useCurrentFrame();
-  const opacity = interpolate(frame, [0, 8, 70, 82], [0, 1, 1, 0], {
+  const opacity = interpolate(frame, [0, 14, 58, 76], [0, 0.9, 0.9, 0], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const y = interpolate(frame, [0, 18], [18, 0], {
+  const y = interpolate(frame, [0, 24], [12, 0], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -164,7 +124,7 @@ const IntroTitle = ({plan}: {plan: EditPlan}) => {
     <AbsoluteFill
       style={{
         justifyContent: 'flex-end',
-        padding: '0 54px 118px',
+        padding: '0 84px 72px',
         fontFamily,
         opacity,
         transform: `translateY(${y}px)`,
@@ -173,10 +133,10 @@ const IntroTitle = ({plan}: {plan: EditPlan}) => {
     >
       <div
         style={{
-          fontSize: 22,
-          letterSpacing: 5,
+          fontSize: 16,
+          letterSpacing: 4,
           fontWeight: 800,
-          color: 'rgba(255,255,255,0.78)',
+          color: 'rgba(255,255,255,0.72)',
           textTransform: 'uppercase',
         }}
       >
@@ -184,10 +144,10 @@ const IntroTitle = ({plan}: {plan: EditPlan}) => {
       </div>
       <div
         style={{
-          marginTop: 12,
-          fontSize: 78,
-          lineHeight: 0.88,
-          letterSpacing: -4,
+          marginTop: 8,
+          fontSize: 50,
+          lineHeight: 0.9,
+          letterSpacing: -2.5,
           fontWeight: 950,
           color: 'white',
           textTransform: 'uppercase',
@@ -203,8 +163,8 @@ const IntroTitle = ({plan}: {plan: EditPlan}) => {
 const EndCard = ({plan}: {plan: EditPlan}) => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
-  const start = durationInFrames - Math.round(plan.fps * 2.8);
-  const opacity = interpolate(frame, [start, start + 10, durationInFrames - 10], [0, 1, 1], {
+  const start = durationInFrames - Math.round(plan.fps * 2.35);
+  const opacity = interpolate(frame, [start, start + 14, durationInFrames - 8], [0, 0.95, 0.95], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -214,7 +174,7 @@ const EndCard = ({plan}: {plan: EditPlan}) => {
       style={{
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 56,
+        padding: 90,
         textAlign: 'center',
         fontFamily,
         opacity,
@@ -223,21 +183,21 @@ const EndCard = ({plan}: {plan: EditPlan}) => {
     >
       <div
         style={{
-          fontSize: 24,
+          fontSize: 18,
           letterSpacing: 7,
           fontWeight: 900,
-          color: 'rgba(255,255,255,0.75)',
+          color: 'rgba(255,255,255,0.76)',
           textTransform: 'uppercase',
-          marginBottom: 18,
+          marginBottom: 14,
         }}
       >
         Howards
       </div>
       <div
         style={{
-          fontSize: 72,
-          lineHeight: 0.92,
-          letterSpacing: -3,
+          fontSize: 62,
+          lineHeight: 0.94,
+          letterSpacing: -2.5,
           fontWeight: 950,
           color: 'white',
           textTransform: 'uppercase',
@@ -262,9 +222,9 @@ const Placeholder = ({plan}: {plan: EditPlan}) => (
       textAlign: 'center',
     }}
   >
-    <div style={{fontSize: 58, fontWeight: 950, letterSpacing: -2}}>Melbourne edit pipeline ready</div>
+    <div style={{fontSize: 58, fontWeight: 950, letterSpacing: -2}}>Melbourne edit ready</div>
     <div style={{fontSize: 28, lineHeight: 1.35, opacity: 0.72, marginTop: 24}}>
-      Add clips to public/clips, song to public/audio, JSON to public/analysis, then run npm run plan.
+      Add clips, audio, and manifest, then run npm run plan.
     </div>
     <div style={{fontSize: 20, opacity: 0.48, marginTop: 42}}>Current BPM: {plan.bpm}</div>
   </AbsoluteFill>
@@ -288,7 +248,7 @@ export const MelbourneEdit = ({plan}: Props) => {
           src={staticFile(`/audio/${plan.audio}`)}
           trimBefore={plan.audioStartFrame}
           volume={(frame) =>
-            interpolate(frame, [0, 18, plan.durationInFrames - 18, plan.durationInFrames], [0, 0.92, 0.92, 0], {
+            interpolate(frame, [0, 16, plan.durationInFrames - 16, plan.durationInFrames], [0, 0.92, 0.92, 0], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',
             })
@@ -296,7 +256,6 @@ export const MelbourneEdit = ({plan}: Props) => {
         />
       ) : null}
 
-      <BeatFlash plan={plan} />
       <Vignette />
       <Grain />
       <IntroTitle plan={plan} />
