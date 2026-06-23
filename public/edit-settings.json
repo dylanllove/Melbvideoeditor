@@ -1,0 +1,12 @@
+{
+  "bpm": 128,
+  "targetSeconds": 21,
+  "minSeconds": 15,
+  "maxSeconds": 25,
+  "audioFile": "song.mp3",
+  "audioStartSeconds": 0,
+  "title": "Howards in Melbourne",
+  "subtitle": "Week in the field",
+  "endCard": "Making moves in the Aus market",
+  "style": "melbourne-howards-founder-edit"
+}
