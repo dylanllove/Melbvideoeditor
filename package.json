@@ -1,0 +1,29 @@
+{
+  "name": "melbvideoeditor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "studio": "remotion studio src/index.ts",
+    "plan": "tsx scripts/build-edit-plan.ts",
+    "render": "npm run plan && tsx scripts/render.ts",
+    "render:1080": "npm run render",
+    "typecheck": "tsc --noEmit",
+    "setup:remotion-skills": "npx -y skills@latest add remotion-dev/skills -g -y"
+  },
+  "dependencies": {
+    "@remotion/cli": "latest",
+    "@remotion/renderer": "latest",
+    "remotion": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
