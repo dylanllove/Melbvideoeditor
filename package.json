@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "remotion studio src/index.ts",
     "studio": "remotion studio src/index.ts",
+    "check:assets": "tsx scripts/check-assets.ts",
     "plan": "tsx scripts/build-edit-plan.ts",
     "render": "npm run plan && tsx scripts/render.ts",
     "render:1080": "npm run render",
