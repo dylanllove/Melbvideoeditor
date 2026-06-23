@@ -1,9 +1,15 @@
+export type MediaType = 'video' | 'image';
+
 export type Segment = {
   id: string;
   clip: string;
+  mediaType: MediaType;
   label: string;
+  note?: string;
   startSec: number;
   endSec: number;
+  timelineStartSec: number;
+  timelineEndSec: number;
   fromFrame: number;
   durationFrames: number;
   beatStart: number;
@@ -27,6 +33,8 @@ export type EditPlan = {
   title: string;
   subtitle: string;
   endCard: string;
+  pacingStyle?: string;
+  manifestSource?: string;
   segments: Segment[];
   notes: string[];
 };
