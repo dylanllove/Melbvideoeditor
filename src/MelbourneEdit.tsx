@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AbsoluteFill,
   Html5Audio,
+  Img,
   OffthreadVideo,
   Sequence,
   interpolate,
@@ -13,6 +14,14 @@ import type {EditPlan, Segment} from './types';
 
 type Props = {
   plan: EditPlan;
+};
+
+type MediaLayerProps = {
+  segment: Segment;
+  src: string;
+  trimBefore: number;
+  trimAfter: number;
+  style: React.CSSProperties;
 };
 
 const fontFamily = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", Arial, sans-serif';
@@ -56,6 +65,14 @@ const Vignette = () => (
   />
 );
 
+const MediaLayer = ({segment, src, trimBefore, trimAfter, style}: MediaLayerProps) => {
+  if (segment.mediaType === 'image') {
+    return <Img src={src} style={style} />;
+  }
+
+  return <OffthreadVideo src={src} trimBefore={trimBefore} trimAfter={trimAfter} muted style={style} />;
+};
+
 const ClipLayer = ({segment}: {segment: Segment}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -64,7 +81,7 @@ const ClipLayer = ({segment}: {segment: Segment}) => {
   const trimBefore = Math.max(0, Math.round(segment.startSec * fps));
   const trimAfter = Math.max(trimBefore + 1, Math.round(segment.endSec * fps));
   const src = staticFile(`/clips/${segment.clip}`);
-  const punchScale = interpolate(progress, [0, 1], [1.06, 1.14], {
+  const punchScale = interpolate(progress, [0, 1], segment.mediaType === 'image' ? [1.0, 1.08] : [1.06, 1.14], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -76,15 +93,16 @@ const ClipLayer = ({segment}: {segment: Segment}) => {
   return (
     <Sequence from={segment.fromFrame} durationInFrames={segment.durationFrames} name={segment.label}>
       <AbsoluteFill style={{background: '#050505'}}>
-        <OffthreadVideo
+        <MediaLayer
+          segment={segment}
           src={src}
           trimBefore={trimBefore}
           trimAfter={trimAfter}
-          muted
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'cover',
+            objectPosition: `${segment.cropX ?? 50}% ${segment.cropY ?? 50}%`,
             filter: 'blur(22px) brightness(0.55) contrast(1.15) saturate(1.15)',
             transform: `scale(${punchScale * 1.16})`,
           }}
@@ -107,17 +125,20 @@ const ClipLayer = ({segment}: {segment: Segment}) => {
               background: '#111',
             }}
           >
-            <OffthreadVideo
+            <MediaLayer
+              segment={segment}
               src={src}
               trimBefore={trimBefore}
               trimAfter={trimAfter}
-              muted
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
                 objectPosition: `${segment.cropX ?? 50}% ${segment.cropY ?? 50}%`,
-                filter: 'brightness(1.18) contrast(1.12) saturate(1.18)',
+                filter:
+                  segment.mediaType === 'image'
+                    ? 'brightness(1.08) contrast(1.08) saturate(1.1)'
+                    : 'brightness(1.18) contrast(1.12) saturate(1.18)',
                 transform: `scale(${punchScale})`,
               }}
             />
